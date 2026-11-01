@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ai-execution-engine
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000

@@ -42,7 +42,29 @@ export class ProviderAdapterRegistry {
   }
 
   public getAdapter(providerSlug: string): ProviderAdapter | undefined {
-    return this.adapters.get(providerSlug.toLowerCase());
+    const slug = providerSlug.toLowerCase();
+    if (this.adapters.has(slug)) {
+      return this.adapters.get(slug);
+    }
+
+    // Auto-register standard OpenAI-compatible providers on demand
+    const knownEndpoints: Record<string, { baseUrl: string; defaultModel: string }> = {
+      deepseek: { baseUrl: "https://api.deepseek.com/v1", defaultModel: "deepseek-chat" },
+      sambanova: { baseUrl: "https://api.sambanova.ai/v1", defaultModel: "Meta-Llama-3.1-70B-Instruct" },
+      together: { baseUrl: "https://api.together.xyz/v1", defaultModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo" },
+      cohere: { baseUrl: "https://api.cohere.com/v2", defaultModel: "command-r" },
+    };
+
+    if (knownEndpoints[slug]) {
+      this.registerOpenAICompatible({
+        providerId: slug,
+        baseUrl: knownEndpoints[slug].baseUrl,
+        defaultModel: knownEndpoints[slug].defaultModel,
+      });
+      return this.adapters.get(slug);
+    }
+
+    return undefined;
   }
 
   public hasAdapter(providerSlug: string): boolean {

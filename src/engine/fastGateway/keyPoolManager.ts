@@ -15,15 +15,26 @@ export class KeyPoolManager {
   }
 
   private initPools(): void {
-    const groqKeys = this.extractKeys("GROQ_API_KEY");
-    const openrouterKeys = this.extractKeys("OPENROUTER_API_KEY");
-    const geminiKeys = this.extractKeys("GEMINI_API_KEY");
+    const knownProviders = [
+      "groq",
+      "openrouter",
+      "gemini",
+      "cerebras",
+      "mistral",
+      "deepseek",
+      "sambanova",
+      "together",
+      "cohere",
+    ];
+
+    for (const prov of knownProviders) {
+      const keys = this.extractKeys(`${prov.toUpperCase()}_API_KEY`);
+      this.registerPool(prov, keys);
+    }
+
+    // Cloudflare uses CLOUDFLARE_API_TOKEN
     const cfKeys = this.extractKeys("CLOUDFLARE_API_TOKEN");
     this.cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID_1 || process.env.CLOUDFLARE_ACCOUNT_ID || "";
-
-    this.registerPool("groq", groqKeys);
-    this.registerPool("openrouter", openrouterKeys);
-    this.registerPool("gemini", geminiKeys);
     this.registerPool("cloudflare", cfKeys);
   }
 
