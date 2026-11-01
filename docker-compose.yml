@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ai-engine-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_execution_engine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_execution_engine"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-execution-engine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ai_execution_engine
+      DB_POOL_MAX: 20
+      GEMINI_API_KEY_1: ${GEMINI_API_KEY_1:-}
+      GROQ_API_KEY_1: ${GROQ_API_KEY_1:-}
+      CLOUDFLARE_API_TOKEN_1: ${CLOUDFLARE_API_TOKEN_1:-}
+      OPENROUTER_API_KEY_1: ${OPENROUTER_API_KEY_1:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

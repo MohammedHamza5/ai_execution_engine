@@ -1,0 +1,46 @@
+{
+  "name": "ai-execution-engine",
+  "version": "0.1.0",
+  "description": "AI Execution Infrastructure and Resource Orchestration Engine",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./client": "./dist/client/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "db:start": "powershell -ExecutionPolicy Bypass -File scripts/start_postgres.ps1",
+    "migrate": "tsx src/db/migrator.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dashboard:dev": "npm --prefix frontend run dev",
+    "dashboard:build": "npm --prefix frontend run build",
+    "dev": "concurrently -n \"BACKEND,DASHBOARD\" -c \"cyan,magenta\" \"npm start\" \"npm run dashboard:dev\"",
+    "mcp": "tsx src/mcp/server.ts",
+    "mcp:dist": "node dist/mcp/server.js"
+  },
+  "keywords": [
+    "ai",
+    "orchestration",
+    "execution-engine",
+    "resource-intelligence"
+  ],
+  "author": "Google Deepmind Team",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "pg": "^8.13.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/pg": "^8.11.11",
+    "concurrently": "^9.2.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

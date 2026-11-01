@@ -1,0 +1,102 @@
+import { FleetResourceConfig } from "../fleetSeedConfig.js";
+
+export function getOpenRouterFleet(): FleetResourceConfig[] {
+  const textOnly = {
+    inputs: ["TEXT"] as const,
+    outputs: ["TEXT"] as const,
+  };
+
+  return [
+    {
+      providerSlug: "openrouter",
+      providerName: "OpenRouter Gateway",
+      providerType: "aggregator",
+      modelSlug: "liquid/lfm-2.5-2.6b:free",
+      modelName: "LiquidAI LFM 2.5 2.6B (Free)",
+      modelFamily: "lfm",
+      capabilities: ["text", "fast", "classifier", "fallback"],
+      credentialName: "OpenRouter Fleet Slot 1",
+      secretRef: "env:OPENROUTER_API_KEY_1",
+      priority: 60,
+      rpmQuota: 20,
+      taxonomy: {
+        modalities: textOnly,
+        archetype: "FAST_REFLEX",
+        tier: "EDGE_LIGHT",
+      },
+    },
+    {
+      providerSlug: "openrouter",
+      providerName: "OpenRouter Gateway",
+      providerType: "aggregator",
+      modelSlug: "google/gemma-4-31b-it:free",
+      modelName: "Google Gemma 4 31B (Free)",
+      modelFamily: "gemma",
+      capabilities: ["text", "code", "reasoning", "fallback"],
+      credentialName: "OpenRouter Fleet Slot 2",
+      secretRef: "env:OPENROUTER_API_KEY_2",
+      priority: 60,
+      rpmQuota: 20,
+      taxonomy: {
+        modalities: textOnly,
+        archetype: "CODE_SYSTEMS",
+        tier: "BALANCED_WORKHORSE",
+      },
+    },
+    {
+      providerSlug: "openrouter",
+      providerName: "OpenRouter Gateway",
+      providerType: "aggregator",
+      modelSlug: "cohere/north-mini-code:free",
+      modelName: "Cohere North Mini Code (Free)",
+      modelFamily: "north",
+      capabilities: ["text", "code", "fallback"],
+      credentialName: "OpenRouter Fleet Slot 3",
+      secretRef: "env:OPENROUTER_API_KEY_3",
+      priority: 50,
+      rpmQuota: 20,
+      taxonomy: {
+        modalities: textOnly,
+        archetype: "CODE_SYSTEMS",
+        tier: "EDGE_LIGHT",
+      },
+    },
+    {
+      providerSlug: "openrouter",
+      providerName: "OpenRouter Gateway",
+      providerType: "aggregator",
+      modelSlug: "nvidia/nemotron-3.5-lightning:free",
+      modelName: "NVIDIA Nemotron 3.5 Lightning (Free)",
+      modelFamily: "nemotron",
+      capabilities: ["text", "reasoning", "long_context", "fallback"],
+      credentialName: "OpenRouter Fleet Slot 4",
+      secretRef: "env:OPENROUTER_API_KEY_4",
+      priority: 50,
+      rpmQuota: 20,
+      taxonomy: {
+        modalities: textOnly,
+        archetype: "REASONING_DELIBERATIVE",
+        tier: "BALANCED_WORKHORSE",
+        specializedDomains: ["LONG_CONTEXT"],
+      },
+    },
+    {
+      providerSlug: "openrouter",
+      providerName: "OpenRouter Gateway",
+      providerType: "aggregator",
+      modelSlug: "liquid/lfm-2.5-2.6b:free",
+      modelName: "LiquidAI LFM 2.5 2.6B (Reserve)",
+      modelFamily: "lfm",
+      capabilities: ["text", "fallback"],
+      credentialName: "OpenRouter Fleet Slot 5 (Disaster Recovery)",
+      secretRef: "env:OPENROUTER_API_KEY_5",
+      priority: 10,
+      rpmQuota: 20,
+      taxonomy: {
+        modalities: textOnly,
+        archetype: "FAST_REFLEX",
+        tier: "EDGE_LIGHT",
+      },
+    },
+  ];
+}
