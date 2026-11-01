@@ -15,10 +15,10 @@ export class KeyPoolManager {
   }
 
   private initPools(): void {
-    const groqKeys = this.extractKeys(["GROQ_API_KEY_1", "GROQ_API_KEY_2", "GROQ_API_KEY_3", "GROQ_API_KEY_4", "GROQ_API_KEY_5", "GROQ_API_KEY"]);
-    const openrouterKeys = this.extractKeys(["OPENROUTER_API_KEY_1", "OPENROUTER_API_KEY_2", "OPENROUTER_API_KEY_3", "OPENROUTER_API_KEY_4", "OPENROUTER_API_KEY_5", "OPENROUTER_API_KEY"]);
-    const geminiKeys = this.extractKeys(["GEMINI_API_KEY_1", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY"]);
-    const cfKeys = this.extractKeys(["CLOUDFLARE_API_TOKEN_1", "CLOUDFLARE_API_TOKEN"]);
+    const groqKeys = this.extractKeys("GROQ_API_KEY");
+    const openrouterKeys = this.extractKeys("OPENROUTER_API_KEY");
+    const geminiKeys = this.extractKeys("GEMINI_API_KEY");
+    const cfKeys = this.extractKeys("CLOUDFLARE_API_TOKEN");
     this.cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID_1 || process.env.CLOUDFLARE_ACCOUNT_ID || "";
 
     this.registerPool("groq", groqKeys);
@@ -27,18 +27,26 @@ export class KeyPoolManager {
     this.registerPool("cloudflare", cfKeys);
   }
 
-  private extractKeys(envVars: string[]): string[] {
+  private extractKeys(prefix: string): string[] {
     const found = new Set<string>();
-    for (const v of envVars) {
-      const val = process.env[v]?.trim();
-      if (val && !val.startsWith("simulated") && !val.startsWith("test-")) {
-        found.add(val);
+    
+    // 1. Scan all environment variables starting with prefix (e.g. GEMINI_API_KEY, GEMINI_API_KEY_1, GEMINI_API_KEY_2...)
+    for (const [k, v] of Object.entries(process.env)) {
+      if (k === prefix || k.startsWith(`${prefix}_`)) {
+        const val = v?.trim();
+        if (val && !val.startsWith("simulated") && !val.startsWith("test-")) {
+          found.add(val);
+        }
       }
     }
+    
+    // 2. Fallback to simulated/test keys if no real keys present
     if (found.size === 0) {
-      for (const v of envVars) {
-        const val = process.env[v]?.trim();
-        if (val) found.add(val);
+      for (const [k, v] of Object.entries(process.env)) {
+        if (k === prefix || k.startsWith(`${prefix}_`)) {
+          const val = v?.trim();
+          if (val) found.add(val);
+        }
       }
     }
     return Array.from(found);
