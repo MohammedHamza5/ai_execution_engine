@@ -121,6 +121,14 @@ export class FastInferenceDispatcher {
         { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
       ];
     }
+    if (hint.startsWith("free/") || hint.includes("apinex") || hint.includes("glm")) {
+      const model = hint.startsWith("free/") ? hint : "free/glm-5.3-flash";
+      return [
+        { provider: "apinex", model, apiKey: "" },
+        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
+        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
+      ];
+    }
 
     // 2. Cognitive Semantic Intent Dispatching (The Engine's Brain)
     if (req) {

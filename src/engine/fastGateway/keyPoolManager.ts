@@ -25,6 +25,7 @@ export class KeyPoolManager {
       "sambanova",
       "together",
       "cohere",
+      "apinex",
     ];
 
     for (const prov of knownProviders) {

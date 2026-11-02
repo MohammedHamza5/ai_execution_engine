@@ -39,7 +39,7 @@ export interface ChatCompletionResponse {
 }
 
 export interface ProviderCandidate {
-  provider: "groq" | "openrouter" | "cloudflare" | "gemini";
+  provider: "groq" | "openrouter" | "cloudflare" | "gemini" | "apinex" | "cerebras" | "mistral" | "deepseek" | string;
   model: string;
   apiKey: string;
   accountId?: string;

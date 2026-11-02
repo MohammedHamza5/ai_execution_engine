@@ -27,6 +27,11 @@ export class ProviderAdapterRegistry {
         baseUrl: "https://api.mistral.ai/v1",
         defaultModel: "mistral-small-latest",
       });
+      this.registerOpenAICompatible({
+        providerId: "apinex",
+        baseUrl: "https://api.apinex.bond/v1",
+        defaultModel: "free/glm-5.3-flash",
+      });
     }
   }
 
