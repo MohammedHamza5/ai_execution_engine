@@ -12,6 +12,8 @@ export interface ResponseFormat {
 export interface ChatCompletionRequest {
   model?: string;
   models?: string[];
+  namespace?: string;
+  tenantId?: string;
   messages: ChatMessage[];
   stream?: boolean;
   temperature?: number;

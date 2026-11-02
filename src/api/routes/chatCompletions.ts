@@ -4,10 +4,14 @@ import { FastInferenceDispatcher } from "../../engine/fastGateway/fastDispatcher
 import { keyPoolManager } from "../../engine/fastGateway/keyPoolManager.js";
 import { swarmSmoother } from "../../engine/fastGateway/swarmConcurrencySmoother.js";
 import { ChatCompletionRequest } from "../../engine/fastGateway/types.js";
+import { vectorMemory } from "../../memory/vectorMemory.js";
+import { embeddingsDispatcher } from "../../engine/fastGateway/embeddingsDispatcher.js";
 
 const chatSchema = z.object({
   model: z.string().optional(),
   models: z.array(z.string()).optional(),
+  namespace: z.string().optional(),
+  tenantId: z.string().optional(),
   messages: z.array(
     z.object({
       role: z.enum(["system", "user", "assistant"]),
@@ -35,6 +39,29 @@ export async function chatCompletionsRoutes(fastify: FastifyInstance): Promise<v
     }
 
     const payload = parse.data as ChatCompletionRequest;
+    const targetNamespace = payload.namespace || payload.tenantId || (request.headers["x-tenant-id"] as string) || (request.headers["x-namespace"] as string);
+
+    // Dynamic Coach Persona & Long-term Memory Injection
+    if (targetNamespace) {
+      try {
+        const lastUserMsg = [...payload.messages].reverse().find(m => m.role === "user")?.content || "";
+        if (lastUserMsg) {
+          const emb = await embeddingsDispatcher.getEmbeddings(lastUserMsg);
+          const memories = await vectorMemory.search(targetNamespace, emb.embeddings[0], 3);
+          const relevant = memories.filter(m => (m.score ?? 0) > 0.35);
+
+          if (relevant.length > 0) {
+            const memoryContext = relevant.map(m => `- ${m.content}`).join("\n");
+            payload.messages.unshift({
+              role: "system",
+              content: `[COACH PERSONA & REINFORCED MEMORY]\nThe following rules, preferences, and corrections were learned from this coach:\n${memoryContext}\nStrictly adhere to this coach's personal philosophy, tone, and past corrections.`
+            });
+          }
+        }
+      } catch {
+        // Non-blocking: continue if vector search is offline
+      }
+    }
 
     if (payload.stream) {
       reply.raw.setHeader("Content-Type", "text/event-stream");
