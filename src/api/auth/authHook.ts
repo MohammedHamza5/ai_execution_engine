@@ -31,6 +31,16 @@ export async function authPreHandler(request: FastifyRequest, reply: FastifyRepl
 
   // If key is provided, validate strictly
   if (rawKey) {
+    const masterKey = process.env.MASTER_API_KEY || process.env.ENGINE_API_KEY;
+    if (masterKey && rawKey === masterKey) {
+      request.authContext = {
+        keyId: "master-key",
+        tenantId: "00000000-0000-0000-0000-000000000001",
+        scopes: ["*"],
+      };
+      return;
+    }
+
     if (rawKey === "sovereign-fleet" || rawKey.startsWith("sovereign-")) {
       request.authContext = {
         keyId: "sovereign-key",

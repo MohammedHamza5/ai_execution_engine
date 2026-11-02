@@ -31,11 +31,14 @@ export function buildServer(): FastifyInstance {
     },
   });
 
-  // CORS Hook for Web Dashboard
+  // CORS Hook for Web & Mobile Clients
   app.addHook("onRequest", async (request, reply) => {
     reply.header("Access-Control-Allow-Origin", "*");
     reply.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    reply.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key, X-Idempotency-Key");
+    reply.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Idempotency-Key, X-Idempotency-Key, X-Api-Key, x-api-key, X-Tenant-Id, x-tenant-id, X-Namespace, x-namespace, X-App-Id, x-app-id"
+    );
     if (request.method === "OPTIONS") {
       return reply.status(204).send();
     }
