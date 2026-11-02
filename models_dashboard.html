@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Execution Engine — دليل ومصفوفة النماذج والكوتا الشاملة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0B0F17;
+      --bg-card: #131A26;
+      --bg-card-hover: #1A2333;
+      --bg-elevated: #1F2A3D;
+      --border: #232E42;
+      --border-accent: #33435E;
+      --text-main: #F1F5F9;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      
+      --accent-tier1: #EC4899; /* Pink / Deep Purple for Heavy */
+      --accent-tier1-bg: rgba(236, 72, 153, 0.12);
+      --accent-tier2: #F59E0B; /* Amber for Medium */
+      --accent-tier2-bg: rgba(245, 158, 11, 0.12);
+      --accent-tier3: #10B981; /* Emerald for Fast */
+      --accent-tier3-bg: rgba(16, 185, 129, 0.12);
+      
+      --brand-gemini: #4285F4;
+      --brand-groq: #F97316;
+      --brand-openrouter: #8B5CF6;
+      --brand-cloudflare: #F5A623;
+      --brand-apinex: #06B6D4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      right: -100px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .badge-runtime {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 999px;
+      color: #34D399;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .badge-runtime .dot {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10B981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      background: linear-gradient(to right, #FFFFFF, #CBD5E1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 850px;
+    }
+
+    /* KPI Stats Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-accent);
+    }
+
+    .kpi-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 900;
+      font-family: 'JetBrains Mono', monospace;
+      color: #FFFFFF;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .kpi-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* Filters & Controls */
+    .controls-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border-color: var(--border-accent);
+    }
+
+    .filter-btn.active {
+      background: #FFFFFF;
+      color: #0B0F17;
+      border-color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    }
+
+    .filter-btn .count-badge {
+      background: rgba(0, 0, 0, 0.25);
+      color: inherit;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 260px;
+      max-width: 380px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px 10px 38px;
+      color: #FFFFFF;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: #38BDF8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* Models Table */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: right;
+    }
+
+    thead th {
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.5px;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.15s ease;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    td {
+      padding: 16px;
+      font-size: 13.5px;
+      vertical-align: middle;
+    }
+
+    /* Badges & Tags */
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tier-1 {
+      background: var(--accent-tier1-bg);
+      color: #F472B6;
+      border: 1px solid rgba(236, 72, 153, 0.3);
+    }
+
+    .tier-2 {
+      background: var(--accent-tier2-bg);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .tier-3 {
+      background: var(--accent-tier3-bg);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .provider-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .provider-gemini { color: var(--brand-gemini); border: 1px solid rgba(66, 133, 244, 0.3); }
+    .provider-groq { color: var(--brand-groq); border: 1px solid rgba(249, 115, 22, 0.3); }
+    .provider-openrouter { color: var(--brand-openrouter); border: 1px solid rgba(139, 92, 246, 0.3); }
+    .provider-cloudflare { color: var(--brand-cloudflare); border: 1px solid rgba(245, 166, 35, 0.3); }
+    .provider-apinex { color: var(--brand-apinex); border: 1px solid rgba(6, 182, 212, 0.3); }
+
+    .model-name {
+      font-weight: 800;
+      font-size: 15px;
+      color: #FFFFFF;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .model-slug {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .model-slug:hover {
+      border-color: #38BDF8;
+      color: #38BDF8;
+    }
+
+    .limit-box {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .limit-highlight {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #F8FAFC;
+      font-size: 13px;
+    }
+
+    .limit-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .multiplier-tag {
+      display: inline-block;
+      font-size: 10.5px;
+      padding: 1px 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      color: #94A3B8;
+      margin-top: 2px;
+    }
+
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      max-width: 250px;
+    }
+
+    .feature-tag {
+      font-size: 10.5px;
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .speed-meter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #38BDF8;
+    }
+
+    /* Modal / Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #10B981;
+      color: #064E3B;
+      font-weight: 800;
+      padding: 12px 24px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      body { padding: 12px; }
+      .table-container { overflow-x: auto; }
+      table { min-width: 850px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="badge-runtime">
+        <span class="dot"></span>
+        الأسطول الذكي نشط 24/7 ومحمي بالـ Failover التلقائي
+      </div>
+      <h1>مصفوفة نماذج الذكاء الاصطناعي — السعة والحدود المجمعة</h1>
+      <p class="subtitle">
+        دليل تحليلي شامل لجميع الموديلات المربوطة بمحرك <strong>AI-Execution-Engine</strong>، مصنفة حسب قوة المعالجة مع إجمالي حدود الطلبات في الدقيقة (RPM)، اليوم (RPD)، والشهر، مضروبة في عدد المفاتيح المجانية المتاحة عبر أسطولنا.
+      </p>
+    </div>
+  </header>
+
+  <!-- KPI Grid -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">المفاتيح النشطة في الأسطول</div>
+      <div class="kpi-value">17 <span style="font-size: 14px; color: #10B981;">مفتاح API</span></div>
+      <div class="kpi-desc">5 Gemini • 5 Groq • 5 OpenRouter • Cloudflare • APInex</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">إجمالي الطاقة اليومية القصوى</div>
+      <div class="kpi-value">92,400+ <span style="font-size: 14px; color: #38BDF8;">طلب/يوم</span></div>
+      <div class="kpi-desc">أكثر من 2.7 مليون طلب معالجة شهرياً مجاناً</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">أعلى معدل تدفق في الدقيقة</div>
+      <div class="kpi-value">620+ <span style="font-size: 14px; color: #F59E0B;">RPM</span></div>
+      <div class="kpi-desc">موزعة عبر Round-Robin الذكي و Cooldown Guard</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">التكلفة التشغيلية الإجمالية</div>
+      <div class="kpi-value">$0.00 <span style="font-size: 14px; color: #10B981;">شهرياً</span></div>
+      <div class="kpi-desc">اعتماد 100% على الكوتا المجانية الرسمية دون أي انتهاك</div>
+    </div>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="controls-panel">
+    <div class="filter-tabs">
+      <button class="filter-btn active" onclick="filterTier('all', this)">
+        الكل <span class="count-badge">19</span>
+      </button>
+      <button class="filter-btn" onclick="filterTier('tier1', this)">
+        🔴 النماذج القوية (Heavy) <span class="count-badge">6</span>
+      </button>
+      <button class="filter-btn" onclick="filterTier('tier2', this)">
+        🟡 النماذج المتوسطة (Balanced) <span class="count-badge">7</span>
+      </button>
+      <button class="filter-btn" onclick="filterTier('tier3', this)">
+        🟢 النماذج الخفيفة والفائقة (Fast) <span class="count-badge">6</span>
+      </button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input" placeholder="ابحث باسم الموديل، المزود، أو الميزة..." onkeyup="searchModels()">
+      <span class="search-icon">🔍</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>النموذج والمزود</th>
+          <th>التصنيف</th>
+          <th>الكوتا في الدقيقة (RPM)</th>
+          <th>الكوتا اليومية (RPD)</th>
+          <th>الكوتا الشهرية التقديرية</th>
+          <th>الذاكرة (Context)</th>
+          <th>السرعة التقريبية</th>
+          <th>أبرز المزايا ونقاط القوة</th>
+        </tr>
+      </thead>
+      <tbody id="modelsTableBody">
+
+        <!-- ================= TIER 1: HEAVY / STRONG ================= -->
+        <tr data-tier="tier1" data-search="deepseek r1 reasoning openrouter برمجة تفكير">
+          <td>
+            <div class="model-name">
+              DeepSeek R1 (Reasoning)
+              <span class="provider-pill provider-openrouter">OpenRouter</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('deepseek/deepseek-r1:free')">
+              deepseek/deepseek-r1:free 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-1">🔴 قوي (تفكير عميق)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">100 RPM</span>
+              <span class="limit-sub">20 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">1,000 RPD</span>
+              <span class="limit-sub">200 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">30,000 طلب</span></td>
+          <td>128K</td>
+          <td><span class="speed-meter">~45 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">تفكير رياضي معقد</span>
+              <span class="feature-tag">معمارية متطورة</span>
+              <span class="feature-tag">منافس OpenAI o1</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier1" data-search="llama 3.3 70b versatile groq سرعة منطق كود">
+          <td>
+            <div class="model-name">
+              Llama 3.3 70B Versatile
+              <span class="provider-pill provider-groq">Groq</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('llama-3.3-70b-versatile')">
+              llama-3.3-70b-versatile 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-1">🔴 قوي (شامل وخارق)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">150 RPM</span>
+              <span class="limit-sub">30 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">5,000 RPD</span>
+              <span class="limit-sub">1,000 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">150,000 طلب</span></td>
+          <td>128K</td>
+          <td><span class="speed-meter">~280 t/s ⚡</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">سرعة خيالية LPU</span>
+              <span class="feature-tag">برمجة ومخططات</span>
+              <span class="feature-tag">دقة عالية جداً</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier1" data-search="qwen 3.8 max apinex صيني قوي كود عربي">
+          <td>
+            <div class="model-name">
+              Qwen 3.8 MAX
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/qwen-3.8-max')">
+              free/qwen-3.8-max 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-1">🔴 قوي (عملاق Qwen)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">20 - 30 RPM</span>
+              <span class="limit-sub">معدل البوابة المجاني</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~2,000 RPD</span>
+              <span class="limit-sub">مدعوم بـ MegaPot</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~60,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~60 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">سياق 1 مليون توكن</span>
+              <span class="feature-tag">وحش في اللغة العربية</span>
+              <span class="feature-tag">منطق وبرمجة</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier1" data-search="gemini 1.5 pro google ذاكرة ملفات ضخمة">
+          <td>
+            <div class="model-name">
+              Gemini 1.5 Pro
+              <span class="provider-pill provider-gemini">Google Gemini</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('gemini-1.5-pro')">
+              gemini-1.5-pro 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-1">🔴 قوي (أكبر سياق عالمياً)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">10 RPM</span>
+              <span class="limit-sub">2 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">250 RPD</span>
+              <span class="limit-sub">50 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">7,500 طلب</span></td>
+          <td>2,000K (2M)</td>
+          <td><span class="speed-meter">~40 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">2 مليون توكن سياق</span>
+              <span class="feature-tag">قراءة كتب ومكتبات كود</span>
+              <span class="feature-tag">فيديو وصوتيات</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier1" data-search="kimi k3 moonshot apinex سياق طويل أبحاث">
+          <td>
+            <div class="model-name">
+              Kimi K3 (Moonshot)
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/kimi-k3')">
+              free/kimi-k3 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-1">🔴 قوي (تحليل وثائق ضخمة)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">20 RPM</span>
+              <span class="limit-sub">بوابة APInex</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~1,500 RPD</span>
+              <span class="limit-sub">كوتا التوكنز اليومية</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~45,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~50 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">أبحاث وملفات PDF</span>
+              <span class="feature-tag">فهم سياقي معقد</span>
+              <span class="feature-tag">1M سياق كامل</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier1" data-search="glm 5.3 zhipu apinex ذكاء اصطناعي صيني">
+          <td>
+            <div class="model-name">
+              GLM 5.3
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/glm-5.3')">
+              free/glm-5.3 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-1">🔴 قوي (الجيل الخامس GLM)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">20 RPM</span>
+              <span class="limit-sub">بوابة APInex</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~1,500 RPD</span>
+              <span class="limit-sub">كوتا التوكنز</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~45,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~55 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">أحدث إصدار لـ GLM</span>
+              <span class="feature-tag">توليد نصوص متقنة</span>
+              <span class="feature-tag">استخراج بيانات دقيق</span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ================= TIER 2: BALANCED / MEDIUM ================= -->
+        <tr data-tier="tier2" data-search="gemini 1.5 flash google سريع سياق صور رؤية">
+          <td>
+            <div class="model-name">
+              Gemini 1.5 Flash
+              <span class="provider-pill provider-gemini">Google Gemini</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('gemini-1.5-flash')">
+              gemini-1.5-flash 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (العمود الفقري المتوازن)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">75 RPM</span>
+              <span class="limit-sub">15 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">7,500 RPD</span>
+              <span class="limit-sub">1,500 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">225,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~110 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">رؤية حاسوبية Vision</span>
+              <span class="feature-tag">كوتا يومية ضخمة</span>
+              <span class="feature-tag">أسرع وأضمن خيار Fallback</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier2" data-search="qwen 3.8 27b groq عربي كود لغة برمجة">
+          <td>
+            <div class="model-name">
+              Qwen 3.8 27B / Coder
+              <span class="provider-pill provider-groq">Groq</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('qwen/qwen3.8-27b')">
+              qwen/qwen3.8-27b 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (بطل البرمجة والعربية)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">150 RPM</span>
+              <span class="limit-sub">30 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">5,000 RPD</span>
+              <span class="limit-sub">1,000 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">150,000 طلب</span></td>
+          <td>128K</td>
+          <td><span class="speed-meter">~320 t/s ⚡</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">صياغة عربية ممتازة</span>
+              <span class="feature-tag">توليد JSON نظيف</span>
+              <span class="feature-tag">كتابة واختبار الأكواد</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier2" data-search="glm 5.3 flash apinex فائق السرعة مجاني">
+          <td>
+            <div class="model-name">
+              GLM 5.3 Flash
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/glm-5.3-flash')">
+              free/glm-5.3-flash 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (سريع جداً واستجابة 1s)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">30 RPM</span>
+              <span class="limit-sub">معدل البوابة</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~3,000 RPD</span>
+              <span class="limit-sub">كوتا مجانية يومية</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~90,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~120 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">تم اختباره ونجاحه حياً</span>
+              <span class="feature-tag">استجابة سريعة جداً</span>
+              <span class="feature-tag">0 تكلفة توكنز</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier2" data-search="deepseek v4.1 flash apinex ديب سيك سريع">
+          <td>
+            <div class="model-name">
+              DeepSeek V4.1 Flash
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/deepseek-v4.1-flash')">
+              free/deepseek-v4.1-flash 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (ديب سيك التفاعلي)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">25 RPM</span>
+              <span class="limit-sub">بوابة APInex</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~2,500 RPD</span>
+              <span class="limit-sub">كوتا مجانية</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~75,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~100 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">معمارية MoE الحديثة</span>
+              <span class="feature-tag">تحليل سريع للأوامر</span>
+              <span class="feature-tag">مناسب للـ Chatbot</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier2" data-search="allam 2 7b groq سعودي عربي سيادي">
+          <td>
+            <div class="model-name">
+              Allam 2 7B (Sovereign Arabic)
+              <span class="provider-pill provider-groq">Groq</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('allam-2-7b')">
+              allam-2-7b 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (متخصص الهوية العربية)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">150 RPM</span>
+              <span class="limit-sub">30 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">5,000 RPD</span>
+              <span class="limit-sub">1,000 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">150,000 طلب</span></td>
+          <td>32K</td>
+          <td><span class="speed-meter">~350 t/s ⚡</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">نموذج علام المتخصص</span>
+              <span class="feature-tag">ثقافة وبلاغة عربية</span>
+              <span class="feature-tag">سرعة صاروخية على Groq</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier2" data-search="gemma2 9b groq جوجل خفيف">
+          <td>
+            <div class="model-name">
+              Gemma 2 9B IT
+              <span class="provider-pill provider-groq">Groq</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('gemma2-9b-it')">
+              gemma2-9b-it 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (توجيه تعليمات دقيق)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">150 RPM</span>
+              <span class="limit-sub">30 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">5,000 RPD</span>
+              <span class="limit-sub">1,000 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">150,000 طلب</span></td>
+          <td>8K</td>
+          <td><span class="speed-meter">~420 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">التزام صارم بالـ Prompts</span>
+              <span class="feature-tag">تلخيص المهام</span>
+              <span class="feature-tag">خالٍ من الهلوسة</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier2" data-search="minimax m3.1 flash apinex كتابة محتوى">
+          <td>
+            <div class="model-name">
+              MiniMax M3.1 Flash
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/minimax-m3.1-flash')">
+              free/minimax-m3.1-flash 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-2">🟡 متوسط (كتابة إبداعية)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">25 RPM</span>
+              <span class="limit-sub">بوابة APInex</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~2,000 RPD</span>
+              <span class="limit-sub">كوتا مجانية</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~60,000 طلب</span></td>
+          <td>1,000K (1M)</td>
+          <td><span class="speed-meter">~80 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">كتابة إيميلات وتسويق</span>
+              <span class="feature-tag">محادثة طبيعية</span>
+              <span class="feature-tag">1M سياق</span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ================= TIER 3: FAST / LIGHT ================= -->
+        <tr data-tier="tier3" data-search="llama 3.1 8b instant groq صاروخي تصنيف مهام">
+          <td>
+            <div class="model-name">
+              Llama 3.1 8B Instant
+              <span class="provider-pill provider-groq">Groq</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('llama-3.1-8b-instant')">
+              llama-3.1-8b-instant 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-3">🟢 فائق السرعة (أضخم كوتا عالمياً)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">150 RPM</span>
+              <span class="limit-sub">30 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight" style="color: #34D399;">72,000 RPD 🔥</span>
+              <span class="limit-sub">14,400 طلب/يوم لكل مفتاح!</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight" style="color: #34D399;">2,160,000 طلب!</span></td>
+          <td>128K</td>
+          <td><span class="speed-meter" style="color: #34D399;">~850 t/s 🚀</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">850 توكن في الثانية!</span>
+              <span class="feature-tag">تصنيف فوري للأوامر</span>
+              <span class="feature-tag">فلترة وتنظيف البيانات</span>
+              <span class="feature-tag">مستحيل نفاذ كوتته</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier3" data-search="cloudflare llama 3.1 8b edge حافة سيرفرليس">
+          <td>
+            <div class="model-name">
+              Cloudflare Llama 3.1 8B
+              <span class="provider-pill provider-cloudflare">Cloudflare AI</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('@cf/meta/llama-3.1-8b-instruct')">
+              @cf/meta/llama-3.1-8b-instruct 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-3">🟢 فائق السرعة (Edge Global)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">50 RPM</span>
+              <span class="limit-sub">شبكة الحافة العالمية</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~5,000 RPD</span>
+              <span class="limit-sub">10,000 Neurons يومياً مجاناً</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~150,000 طلب</span></td>
+          <td>128K</td>
+          <td><span class="speed-meter">~150 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">تشغيل على 300+ مركز بيانات</span>
+              <span class="feature-tag">زمن وصول منخفض (Low Latency)</span>
+              <span class="feature-tag">ضمان استمرارية دائم</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier3" data-search="bge large embeddings cloudflare متجهات بحث">
+          <td>
+            <div class="model-name">
+              BAAI BGE-Large (Vector Embeddings)
+              <span class="provider-pill provider-cloudflare">Cloudflare AI</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('@cf/baai/bge-large-en-v1.5')">
+              @cf/baai/bge-large-en-v1.5 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-3">🟢 متخصص (ذاكرة وبحث دلالي RAG)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">100 RPM</span>
+              <span class="limit-sub">توليد متجهات سريع</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~8,000 RPD</span>
+              <span class="limit-sub">كوتا Neurons</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~240,000 طلب</span></td>
+          <td>512 Tokens</td>
+          <td><span class="speed-meter">فوري (< 150ms)</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">1024-dim Vector</span>
+              <span class="feature-tag">محرك Vector Memory</span>
+              <span class="feature-tag">البحث في الوثائق</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier3" data-search="liquid lfm 2.5 openrouter خفيف جدا">
+          <td>
+            <div class="model-name">
+              Liquid LFM 2.5 2.6B
+              <span class="provider-pill provider-openrouter">OpenRouter</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('liquid/lfm-2.5-2.6b:free')">
+              liquid/lfm-2.5-2.6b:free 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-3">🟢 خفيف (معمارية Liquid AI)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">100 RPM</span>
+              <span class="limit-sub">20 RPM × 5 مفاتيح</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">1,000 RPD</span>
+              <span class="limit-sub">200 طلب/يوم لكل مفتاح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">30,000 طلب</span></td>
+          <td>32K</td>
+          <td><span class="speed-meter">~180 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">استهلاك طاقة وتوكنز ضئيل</span>
+              <span class="feature-tag">مهام التحويل السريعة</span>
+              <span class="feature-tag">مجاني دائماً</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier3" data-search="whisper large v3 groq صوت تحويل صوت إلى نص">
+          <td>
+            <div class="model-name">
+              Whisper Large V3 (Audio/STT)
+              <span class="provider-pill provider-groq">Groq</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('whisper-large-v3')">
+              whisper-large-v3 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-3">🟢 متخصص (تحويل الصوت لنص STT)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">50 RPM</span>
+              <span class="limit-sub">10,000 ثانية صوتية/دقيقة</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~2,500 ملف صوت</span>
+              <span class="limit-sub">عبر 5 مفاتيح</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~75,000 ملف</span></td>
+          <td>25 MB Audio</td>
+          <td><span class="speed-meter">أسرع من الوقت الحقيقي بـ 20x</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">دعم اللهجات العربية بدقة</span>
+              <span class="feature-tag">تفريغ المحادثات الصوتية</span>
+              <span class="feature-tag">مثالي للرسائل الصوتية في Korvia</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr data-tier="tier3" data-search="jev 1.13 apinex خفيف سريع">
+          <td>
+            <div class="model-name">
+              Jev 1.13
+              <span class="provider-pill provider-apinex">APInex</span>
+            </div>
+            <div class="model-slug" onclick="copySlug('free/jev-1.13')">
+              free/jev-1.13 📋
+            </div>
+          </td>
+          <td><span class="tier-badge tier-3">🟢 خفيف (خدمي وتصنيف)</span></td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">25 RPM</span>
+              <span class="limit-sub">بوابة APInex</span>
+            </div>
+          </td>
+          <td>
+            <div class="limit-box">
+              <span class="limit-highlight">~2,000 RPD</span>
+              <span class="limit-sub">كوتا مجانية</span>
+            </div>
+          </td>
+          <td><span class="limit-highlight">~60,000 طلب</span></td>
+          <td>64K</td>
+          <td><span class="speed-meter">~130 t/s</span></td>
+          <td>
+            <div class="features-list">
+              <span class="feature-tag">مهام الفحص الأمني السريعة</span>
+              <span class="feature-tag">تحليل الكلمات الدلالية</span>
+              <span class="feature-tag">0 تكلفة</span>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Copy Toast Notification -->
+<div id="toast" class="toast">تم نسخ معرف الموديل بنجاح! 📋</div>
+
+<script>
+  // Filter by Tier
+  function filterTier(tier, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const rows = document.querySelectorAll('#modelsTableBody tr');
+    rows.forEach(row => {
+      if (tier === 'all' || row.getAttribute('data-tier') === tier) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // Live Search
+  function searchModels() {
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#modelsTableBody tr');
+
+    rows.forEach(row => {
+      const text = (row.innerText + ' ' + (row.getAttribute('data-search') || '')).toLowerCase();
+      if (text.includes(query)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // Copy Model Slug to Clipboard
+  function copySlug(slug) {
+    navigator.clipboard.writeText(slug).then(() => {
+      const toast = document.getElementById('toast');
+      toast.innerText = 'تم نسخ المعرف: ' + slug + ' 📋';
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    });
+  }
+</script>
+
+</body>
+</html>
