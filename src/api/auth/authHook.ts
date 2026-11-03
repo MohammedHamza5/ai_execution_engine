@@ -7,7 +7,7 @@ declare module "fastify" {
   }
 }
 
-const PUBLIC_PREFIXES = ["/health", "/readiness", "/dashboard", "/favicon.ico"];
+const PUBLIC_PREFIXES = ["/health", "/readiness", "/dashboard", "/favicon.ico", "/v1/models", "/v1/fleet/stats"];
 
 export async function authPreHandler(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const url = request.url.split("?")[0];

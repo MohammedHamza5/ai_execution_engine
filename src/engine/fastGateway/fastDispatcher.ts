@@ -93,9 +93,49 @@ export class FastInferenceDispatcher {
   public static buildCandidateChain(modelHint?: string, req?: ChatCompletionRequest): ProviderCandidate[] {
     const hint = (modelHint || "auto").toLowerCase();
 
-    // 1. Explicit Model Family Overrides
+    // Guard: Redirect Subscription-Only models to high-capacity free titans
+    const subscriptionOnlySlugs = ["claude-sonnet", "claude-opus", "mimo-v2.6", "minimax-m3", "hy4"];
+    if (subscriptionOnlySlugs.some(s => hint.includes(s))) {
+      return [
+        { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
+        { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
+        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
+      ];
+    }
+
+    // 1. Direct Next-Gen Apinex 2026 Free Titans (Highest Priority when requested)
+    if (hint.startsWith("free/") || hint.includes("apinex")) {
+      const targetModel = hint.startsWith("free/") ? hint : `free/${hint.replace("apinex/", "")}`;
+      return [
+        { provider: "apinex", model: targetModel, apiKey: "" },
+        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
+        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
+      ];
+    }
+
+    // 2. Explicit Model Family Overrides
+    if (hint.includes("qwen")) {
+      return [
+        { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
+      ];
+    }
+    if (hint.includes("glm")) {
+      return [
+        { provider: "apinex", model: "free/glm-5.3-flash", apiKey: "" },
+        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
+      ];
+    }
+    if (hint.includes("kimi")) {
+      return [
+        { provider: "apinex", model: "free/kimi-k3", apiKey: "" },
+        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
+      ];
+    }
     if (hint.includes("deepseek") || hint.includes("reasoning")) {
       return [
+        { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
         { provider: "openrouter", model: "deepseek/deepseek-r1:free", apiKey: "" },
         { provider: "groq", model: "openai/gpt-oss-120b", apiKey: "" },
         { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
@@ -111,6 +151,7 @@ export class FastInferenceDispatcher {
     }
     if (hint.includes("gemini") || hint.includes("context")) {
       return [
+        { provider: "apinex", model: "free/gemini-3.8-flash", apiKey: "" },
         { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
         { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
       ];
@@ -119,26 +160,6 @@ export class FastInferenceDispatcher {
       return [
         { provider: "cloudflare", model: "@cf/meta/llama-3.1-8b-instruct", apiKey: "" },
         { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-      ];
-    }
-
-    // Guard: Redirect Subscription-Only models to high-capacity free titans
-    const subscriptionOnlySlugs = ["claude-sonnet", "claude-opus", "mimo-v2.6", "minimax-m3", "hy4"];
-    if (subscriptionOnlySlugs.some(s => hint.toLowerCase().includes(s))) {
-      return [
-        { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
-        { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-      ];
-    }
-
-    if (hint.startsWith("free/") || hint.includes("apinex") || hint.includes("glm") || hint.includes("qwen") || hint.includes("deepseek")) {
-      const model = hint.startsWith("free/") ? hint : (hint.includes("qwen") ? "free/qwen-3.8-max" : (hint.includes("deepseek") ? "free/deepseek-v4.1-flash" : "free/glm-5.3-flash"));
-      return [
-        { provider: "apinex", model, apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
       ];
     }
 
