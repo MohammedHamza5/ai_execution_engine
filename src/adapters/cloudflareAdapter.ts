@@ -70,10 +70,20 @@ export class CloudflareProviderAdapter implements ProviderAdapter {
           "Content-Type": "application/json",
           Authorization: `Bearer ${secretApiKey}`,
         },
-        body: JSON.stringify({
-          prompt: request.prompt,
-          max_tokens: request.parameters?.maxOutputTokens ?? 1024,
-        }),
+        body: JSON.stringify(
+          request.systemInstruction
+            ? {
+                messages: [
+                  { role: "system", content: request.systemInstruction },
+                  { role: "user", content: request.prompt },
+                ],
+                max_tokens: request.parameters?.maxOutputTokens ?? 1024,
+              }
+            : {
+                prompt: request.prompt,
+                max_tokens: request.parameters?.maxOutputTokens ?? 1024,
+              }
+        ),
         signal: controller.signal,
       });
 

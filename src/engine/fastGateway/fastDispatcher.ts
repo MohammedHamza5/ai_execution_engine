@@ -32,6 +32,7 @@ export class FastInferenceDispatcher {
                 resourceId: reqId,
                 modelId: candidate.model,
                 prompt,
+                systemInstruction: req.messages?.find((m) => m.role === "system")?.content,
                 parameters: {
                   temperature: req.temperature ?? 0.7,
                   maxOutputTokens: req.max_tokens ?? 2048,
@@ -93,7 +94,7 @@ export class FastInferenceDispatcher {
     if (messages.length === 1 && messages[0].role === "user") {
       text = messages[0].content;
     } else {
-      text = messages.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n") + "\n\nASSISTANT:";
+      text = messages.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n");
     }
     if (req.response_format?.type === "json_object" && !/json/i.test(text)) {
       text += "\n\n(Respond with a valid JSON object)";
