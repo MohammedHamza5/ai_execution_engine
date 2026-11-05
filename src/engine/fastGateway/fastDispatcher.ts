@@ -50,6 +50,17 @@ export class FastInferenceDispatcher {
           }
         });
 
+        let cleanText = result.outputText;
+        if (isJson || /<think>[\s\S]*?<\/think>/.test(cleanText)) {
+          cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+        }
+        if (isJson) {
+          const jsonMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+          if (jsonMatch) {
+            cleanText = jsonMatch[1].trim();
+          }
+        }
+
         return {
           id: `chatcmpl-${generateUUIDv7()}`,
           object: "chat.completion",
@@ -58,7 +69,7 @@ export class FastInferenceDispatcher {
           choices: [
             {
               index: 0,
-              message: { role: "assistant", content: result.outputText },
+              message: { role: "assistant", content: cleanText },
               finish_reason: "stop",
             },
           ],
@@ -93,138 +104,107 @@ export class FastInferenceDispatcher {
   public static buildCandidateChain(modelHint?: string, req?: ChatCompletionRequest): ProviderCandidate[] {
     const hint = (modelHint || "auto").toLowerCase();
 
-    // Guard: Redirect Subscription-Only models to high-capacity free titans
-    const subscriptionOnlySlugs = ["claude-sonnet", "claude-opus", "mimo-v2.6", "minimax-m3", "hy4"];
-    if (subscriptionOnlySlugs.some(s => hint.includes(s))) {
+    // 1. Arabic Specialist, Qwen Persona Simulation, & Plan Synthesis
+    if (hint.includes("qwen") || hint === "free/qwen-3.8-max" || hint.includes("arabic")) {
       return [
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "groq", model: "allam-2-7b", apiKey: "" },
+        { provider: "openrouter", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
         { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
-        { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
       ];
     }
 
-    // 1. Direct Next-Gen Apinex 2026 Free Titans (Highest Priority when requested)
+    // 2. Ultra-Fast Diagnostic Reasoning, Plateau Analysis, & Churn Prevention
+    if (hint.includes("deepseek") || hint === "free/deepseek-v4.1-flash" || hint.includes("reasoning") || hint.includes("plateau")) {
+      return [
+        { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
+        { provider: "openrouter", model: "deepseek/deepseek-v4.1-flash", apiKey: "" },
+        { provider: "groq", model: "openai/gpt-oss-120b", apiKey: "" },
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
+      ];
+    }
+
+    // 3. Massive Context, Season Wrapped Narratives & Large Document Synthesis
+    if (hint.includes("gemini") || hint === "free/gemini-3.8-flash" || hint.includes("wrapped") || hint.includes("context") || hint.includes("massive")) {
+      return [
+        { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "gemini", model: "gemini-3.8-flash", apiKey: "" },
+        { provider: "apinex", model: "free/gemini-3.8-flash", apiKey: "" },
+      ];
+    }
+
+    // 4. Instant Gym-Floor Swaps & Review Feedback Drafts
+    if (hint.includes("llama-3.3") || hint.includes("swap") || hint.includes("draft") || hint.includes("70b")) {
+      return [
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
+        { provider: "cloudflare", model: "@cf/meta/llama-3.1-8b-instruct", apiKey: "" },
+      ];
+    }
+
+    // 5. Instant Micro-Badges & Rapid Sentiment Classification
+    if (hint.includes("llama-3.1") || hint.includes("8b") || hint.includes("badge") || hint.includes("sentiment")) {
+      return [
+        { provider: "cloudflare", model: "@cf/meta/llama-3.1-8b-instruct", apiKey: "" },
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
+      ];
+    }
+
+    // 6. Generic or Free Prefix Fallbacks
     if (hint.startsWith("free/") || hint.includes("apinex")) {
       const targetModel = hint.startsWith("free/") ? hint : `free/${hint.replace("apinex/", "")}`;
       return [
+        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+        { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
+        { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
         { provider: "apinex", model: targetModel, apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
       ];
     }
 
-    // 2. Explicit Model Family Overrides
-    if (hint.includes("qwen")) {
-      return [
-        { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
-        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-      ];
-    }
-    if (hint.includes("glm")) {
-      return [
-        { provider: "apinex", model: "free/glm-5.3-flash", apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-      ];
-    }
-    if (hint.includes("kimi")) {
-      return [
-        { provider: "apinex", model: "free/kimi-k3", apiKey: "" },
-        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-      ];
-    }
-    if (hint.includes("deepseek") || hint.includes("reasoning")) {
-      return [
-        { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
-        { provider: "openrouter", model: "deepseek/deepseek-r1:free", apiKey: "" },
-        { provider: "groq", model: "openai/gpt-oss-120b", apiKey: "" },
-        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-      ];
-    }
-    if (hint.includes("allam")) {
-      return [
-        { provider: "groq", model: "allam-2-7b", apiKey: "" },
-        { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-      ];
-    }
-    if (hint.includes("gemini") || hint.includes("context")) {
-      return [
-        { provider: "apinex", model: "free/gemini-3.8-flash", apiKey: "" },
-        { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-      ];
-    }
-    if (hint.includes("cloudflare")) {
-      return [
-        { provider: "cloudflare", model: "@cf/meta/llama-3.1-8b-instruct", apiKey: "" },
-        { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-      ];
-    }
-
-    // 2. Cognitive Semantic Intent Dispatching (Next-Gen Fleet AI Brain)
+    // 7. Cognitive Semantic Intent Dispatching
     if (req) {
       const intent = CognitiveIntentAnalyzer.analyze(req);
-
       switch (intent.domain) {
         case "MASSIVE_CONTEXT":
-          return [
-            { provider: "apinex", model: "free/gemini-3.8-flash", apiKey: "" },
-            { provider: "apinex", model: "free/kimi-k3", apiKey: "" },
-            { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-            { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", apiKey: "" },
-          ];
-        case "ARABIC_SPECIALIST":
-          return [
-            { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
-            { provider: "apinex", model: "free/glm-5.3-flash", apiKey: "" },
-            { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-            { provider: "groq", model: "allam-2-7b", apiKey: "" },
-            { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-          ];
         case "VISUAL_CANVAS":
           return [
-            { provider: "apinex", model: "free/gemini-3.8-flash", apiKey: "" },
-            { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
+            { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
             { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-            { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
+            { provider: "gemini", model: "gemini-3.8-flash", apiKey: "" },
+          ];
+        case "ARABIC_SPECIALIST":
+        case "CODE_SYSTEMS":
+          return [
+            { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+            { provider: "groq", model: "allam-2-7b", apiKey: "" },
+            { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
           ];
         case "DEEP_REASONING":
           return [
-            { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
-            { provider: "apinex", model: "free/deepseek-v4-pro-0813", apiKey: "" },
-            { provider: "openrouter", model: "deepseek/deepseek-r1:free", apiKey: "" },
-            { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
-            { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
-          ];
-        case "CODE_SYSTEMS":
-          return [
-            { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
-            { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-            { provider: "openrouter", model: "deepseek/deepseek-r1:free", apiKey: "" },
-            { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
+            { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
+            { provider: "openrouter", model: "deepseek/deepseek-v4.1-flash", apiKey: "" },
+            { provider: "groq", model: "openai/gpt-oss-120b", apiKey: "" },
           ];
         case "FAST_CHAT":
         default:
           return [
-            { provider: "apinex", model: "free/glm-5.3-flash", apiKey: "" },
-            { provider: "apinex", model: "free/deepseek-v4.1-flash", apiKey: "" },
-            { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
             { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
             { provider: "cloudflare", model: "@cf/meta/llama-3.1-8b-instruct", apiKey: "" },
-            { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
+            { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
           ];
       }
     }
 
-    // Default Fallback Chain (Next-Gen Ultra Stack)
+    // Master Default Fallback Chain
     return [
-      { provider: "apinex", model: "free/glm-5.3-flash", apiKey: "" },
-      { provider: "apinex", model: "free/qwen-3.8-max", apiKey: "" },
-      { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: "" },
       { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-      { provider: "gemini", model: "gemini-1.5-flash", apiKey: "" },
+      { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
+      { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
+      { provider: "cloudflare", model: "@cf/meta/llama-3.1-8b-instruct", apiKey: "" },
     ];
   }
 }
