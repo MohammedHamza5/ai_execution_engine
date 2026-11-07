@@ -171,23 +171,32 @@ export class FastInferenceDispatcher {
       const intent = CognitiveIntentAnalyzer.analyze(req);
       switch (intent.domain) {
         case "MASSIVE_CONTEXT":
-        case "VISUAL_CANVAS":
           return [
             { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
             { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
             { provider: "gemini", model: "gemini-3.8-flash", apiKey: "" },
           ];
+        case "VISUAL_CANVAS":
+          return [
+            { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+            { provider: "gemini", model: "gemini-3.8-flash", apiKey: "" },
+            { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct", apiKey: "" },
+          ];
         case "ARABIC_SPECIALIST":
+          return [
+            { provider: "groq", model: "allam-2-7b", apiKey: "" },
+            { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
+            { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
+          ];
         case "CODE_SYSTEMS":
           return [
             { provider: "groq", model: "qwen/qwen3.8-27b", apiKey: "" },
-            { provider: "groq", model: "allam-2-7b", apiKey: "" },
             { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
           ];
         case "DEEP_REASONING":
           return [
+            { provider: "openrouter", model: "deepseek/deepseek-r1:free", apiKey: "" },
             { provider: "cloudflare", model: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", apiKey: "" },
-            { provider: "openrouter", model: "deepseek/deepseek-v4.1-flash", apiKey: "" },
             { provider: "groq", model: "openai/gpt-oss-120b", apiKey: "" },
           ];
         case "FAST_CHAT":

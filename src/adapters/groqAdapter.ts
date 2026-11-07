@@ -42,7 +42,10 @@ export class GroqProviderAdapter implements ProviderAdapter {
     if (!secretApiKey || secretApiKey === "simulated-test-key" || secretApiKey.startsWith("simulated-")) {
       const outputText = this.responseSequence.length > 0
         ? this.responseSequence.shift()!
-        : request.parameters?.simulationResponse || `[Groq Simulated Response] Executed prompt: "${request.prompt.slice(0, 50)}"`;
+        : request.parameters?.simulationResponse ||
+          (request.parameters?.responseFormat === "json"
+            ? JSON.stringify({ status: "ok", code: 200 })
+            : `[Groq Simulated Response] Executed prompt: "${request.prompt.slice(0, 50)}"`);
       const inputTokens = Math.ceil(request.prompt.length / 4);
       const outputTokens = Math.ceil(outputText.length / 4);
       return {

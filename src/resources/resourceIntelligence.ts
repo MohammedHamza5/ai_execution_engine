@@ -50,7 +50,7 @@ export class ResourceIntelligenceService {
       `SELECT r.id FROM resources.resources r
        JOIN ai.providers p ON r.provider_id = p.id
        JOIN ai.models m ON r.model_id = m.id
-       WHERE p.slug = 'gemini' AND m.slug = 'gemini-1.5-flash' AND r.status = 'active'
+       WHERE p.slug = 'gemini' AND m.slug = 'gemini-3.8-flash' AND r.status = 'active'
        LIMIT 1;`
     );
     if (existingResource.rows.length > 0) {
@@ -62,7 +62,7 @@ export class ResourceIntelligenceService {
         [baseId]
       );
       await db.query(
-        `UPDATE ai.models SET metadata = '{"is_paid": false, "capabilities": ["text", "code", "json"]}' WHERE slug = 'gemini-1.5-flash';`
+        `UPDATE ai.models SET metadata = '{"is_paid": false, "capabilities": ["text", "code", "json"]}' WHERE slug = 'gemini-3.8-flash';`
       );
       return baseId;
     }
@@ -86,7 +86,7 @@ export class ResourceIntelligenceService {
     // 2. Model
     let modelId: string;
     const existingModel = await db.query(
-      `SELECT id FROM ai.models WHERE provider_id = $1 AND slug = 'gemini-1.5-flash';`,
+      `SELECT id FROM ai.models WHERE provider_id = $1 AND slug = 'gemini-3.8-flash';`,
       [providerId]
     );
     if (existingModel.rows.length > 0) {
@@ -98,7 +98,7 @@ export class ResourceIntelligenceService {
     } else {
       const modelResult = await db.query(
         `INSERT INTO ai.models (id, provider_id, name, slug, family, metadata)
-         VALUES ('01924b00-0000-7000-8000-000000000002', $1, 'Gemini 1.5 Flash', 'gemini-1.5-flash', 'gemini', '{"is_paid": false, "capabilities": ["text", "code", "json"]}')
+         VALUES ('01924b00-0000-7000-8000-000000000002', $1, 'Gemini 3.8 Flash', 'gemini-3.8-flash', 'gemini', '{"is_paid": false, "capabilities": ["text", "code", "json"]}')
          RETURNING id;`,
         [providerId]
       );

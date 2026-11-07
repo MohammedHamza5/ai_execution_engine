@@ -14,7 +14,7 @@ const BASE_MCP_TOOLS: McpToolDefinition[] = [
       type: "object",
       properties: {
         prompt: { type: "string", description: "The user prompt or query." },
-        model: { type: "string", description: "Optional model hint ('auto', 'deepseek-r1', 'llama-3.3-70b', 'gemini-1.5-flash'). Defaults to 'auto'." },
+        model: { type: "string", description: "Optional model hint ('auto', 'deepseek-r1', 'llama-3.3-70b', 'gemini-3.8-flash'). Defaults to 'auto'." },
         system: { type: "string", description: "Optional system instruction." },
         json: { type: "boolean", description: "Whether to force valid JSON output object." },
       },
